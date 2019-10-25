@@ -47,7 +47,7 @@ protected:
   };
   static PsrInfo _psr_info;
   static void get_processor_features();
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__APPLE__)
   static unsigned long os_get_processor_features();
 #endif
 
@@ -106,6 +106,7 @@ public:
   static int cpu_revision()                   { return _revision; }
   static ByteSize dczid_el0_offset() { return byte_offset_of(PsrInfo, dczid_el0); }
   static ByteSize ctr_el0_offset()   { return byte_offset_of(PsrInfo, ctr_el0); }
+#ifndef __APPLE__
   static bool is_zva_enabled() {
     // Check the DZP bit (bit 4) of dczid_el0 is zero
     // and block size (bit 0~3) is not zero.
@@ -116,11 +117,34 @@ public:
     assert(is_zva_enabled(), "ZVA not available");
     return 4 << (_psr_info.dczid_el0 & 0xf);
   }
+#else
+  static bool is_zva_enabled() { return true; }
+  static int zva_length() { return 16; } 
+  /* MCApollo:
+     Assuming 16, this number gets 4*(x).
+     4 << (1 & 0xf) == 8 => therefore this should be a number of 8^N.
+     FIXME: zva
+  */
+#endif
   static int icache_line_size() {
+#ifdef __APPLE__
+    // FIXME: icache crash.
+    return 64;
+#else
     return (1 << (_psr_info.ctr_el0 & 0x0f)) * 4;
+#endif
   }
   static int dcache_line_size() {
+#ifdef __APPLE__
+    /* MCApollo:
+       Crash here => vm_version_aarch64.cpp:130
+       Assume 64 (sysctl hw.cachelinesize)
+       FIXME: dcache crash.
+    */
+    return 64; 
+#else
     return (1 << ((_psr_info.ctr_el0 >> 16) & 0x0f)) * 4;
+#endif
   }
 };
 

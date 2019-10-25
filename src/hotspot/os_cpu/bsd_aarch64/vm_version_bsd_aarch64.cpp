@@ -27,9 +27,11 @@
 #include "runtime/os.hpp"
 #include "vm_version_aarch64.hpp"
 
+#ifndef __APPLE__
 #include <machine/armreg.h>
 #if defined (__FreeBSD__)
 #include <machine/elf.h>
+#endif
 #endif
 
 #ifndef HWCAP_ASIMD
@@ -186,7 +188,7 @@ const struct cpu_implementers cpu_implementers[] = {
 	CPU_IMPLEMENTER_NONE,
 };
 
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__APPLE__)
 // READ_SPECIALREG is not available from userland on OpenBSD.
 // Hardcode these values to the "lowest common denominator"
 unsigned long VM_Version::os_get_processor_features() {

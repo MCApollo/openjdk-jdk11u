@@ -4262,7 +4262,7 @@ static void current_stack_region(address * bottom, size_t * size) {
     // shell). Apparently Mac OS actually rounds upwards to next multiple of page size,
     // however, we round downwards here to be on the safe side.
     *size = align_down(*size, getpagesize());
-
+# if 0 // iOS
     if ((*size) < (DEFAULT_MAIN_THREAD_STACK_PAGES * (size_t)getpagesize())) {
       char kern_osrelease[256];
       size_t kern_osrelease_size = sizeof(kern_osrelease);
@@ -4274,6 +4274,7 @@ static void current_stack_region(address * bottom, size_t * size) {
         }
       }
     }
+# endif
   }
   *bottom = (address) stacktop - *size;
 #elif defined(__OpenBSD__)

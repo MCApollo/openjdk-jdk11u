@@ -100,15 +100,37 @@
 }
 
 static void pd_conjoint_words(const HeapWord* from, HeapWord* to, size_t count) {
+#ifdef __APPLE__
+  // FIXME: 8151502 causes "Unknown AARCH64 Fixup Kind!" on mach-o
+  // In theory: reverting should output expected output still.
+  (void)memmove(to, from, count * HeapWordSize);
+#else
   __asm volatile( "prfm pldl1strm, [%[s], #0];" :: [s]"r"(from) : "memory");
   if (__builtin_expect(count <= 8, 1)) {
     COPY_SMALL(from, to, count);
     return;
   }
   _Copy_conjoint_words(from, to, count);
+#endif
 }
 
 static void pd_disjoint_words(const HeapWord* from, HeapWord* to, size_t count) {
+#ifdef __APPLE__
+switch (count) {
+  case 8:  to[7] = from[7];
+  case 7:  to[6] = from[6];
+  case 6:  to[5] = from[5];
+  case 5:  to[4] = from[4];
+  case 4:  to[3] = from[3];
+  case 3:  to[2] = from[2];
+  case 2:  to[1] = from[1];
+  case 1:  to[0] = from[0];
+  case 0:  break;
+  default:
+    (void)memcpy(to, from, count * HeapWordSize);
+    break;
+  }
+#else
   if (__builtin_constant_p(count)) {
     memcpy(to, from, count * sizeof(HeapWord));
     return;
@@ -119,15 +141,35 @@ static void pd_disjoint_words(const HeapWord* from, HeapWord* to, size_t count) 
     return;
   }
   _Copy_disjoint_words(from, to, count);
+#endif
 }
 
 static void pd_disjoint_words_atomic(const HeapWord* from, HeapWord* to, size_t count) {
+#ifdef __APPLE__
+  switch (count) {
+  case 8:  to[7] = from[7];
+  case 7:  to[6] = from[6];
+  case 6:  to[5] = from[5];
+  case 5:  to[4] = from[4];
+  case 4:  to[3] = from[3];
+  case 3:  to[2] = from[2];
+  case 2:  to[1] = from[1];
+  case 1:  to[0] = from[0];
+  case 0:  break;
+  default:
+    while (count-- > 0) {
+      *to++ = *from++;
+    }
+    break;
+  }
+#else
   __asm volatile( "prfm pldl1strm, [%[s], #0];" :: [s]"r"(from) : "memory");
   if (__builtin_expect(count <= 8, 1)) {
     COPY_SMALL(from, to, count);
     return;
   }
   _Copy_disjoint_words(from, to, count);
+#endif
 }
 
 static void pd_aligned_conjoint_words(const HeapWord* from, HeapWord* to, size_t count) {

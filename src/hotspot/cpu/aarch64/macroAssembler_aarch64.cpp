@@ -24,6 +24,7 @@
  */
 
 #include <sys/types.h>
+#include <cstdlib> // FIXME: abs warning.
 
 #include "precompiled.hpp"
 #include "jvm.h"
@@ -2681,7 +2682,7 @@ bool MacroAssembler::ldst_can_merge(Register rt,
 
   long cur_offset = adr.offset();
   long prev_offset = prev_ldst->offset();
-  size_t diff = abs(cur_offset - prev_offset);
+  size_t diff = std::abs(cur_offset - prev_offset);
   if (diff != prev_size_in_bytes) {
     return false;
   }
@@ -5761,7 +5762,7 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
   csel(result, result, zr, EQ);
 }
 
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__APPLE__)
 // OpenBSD uses emulated tls so it can't use aarch64_get_thread_helper().
 // Save whatever non-callee save context might get clobbered by
 // Thread::current.

@@ -125,7 +125,9 @@ void VM_Version::get_processor_features() {
   _supports_atomic_getset8 = true;
   _supports_atomic_getadd8 = true;
 
+#if ! defined(__APPLE__)
   getPsrInfo_stub(&_psr_info);
+#endif
 
   int dcache_line = VM_Version::dcache_line_size();
 
@@ -195,7 +197,7 @@ void VM_Version::get_processor_features() {
     }
     fclose(f);
   }
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
   char buf[512];
   int cpu_lines = 0;
   unsigned long auxv = os_get_processor_features();
@@ -252,7 +254,7 @@ void VM_Version::get_processor_features() {
 
   if (_cpu == CPU_ARM && (_model == 0xd07 || _model2 == 0xd07)) _features |= CPU_STXR_PREFETCH;
 
-#ifdef _BSDONLY_SOURCE
+#if defined(_BSDONLY_SOURCE) || defined(__APPLE__)
   // A53 can be combined with A57 and A72 at least. Let's be more
   // conservative and enable CPU_A53MAC work-around for all ARM boards
   if (_cpu == CPU_ARM) _features |= CPU_A53MAC;

@@ -30,14 +30,19 @@
 // modifies code, part of the processor instruction cache potentially
 // has to be flushed.
 
+#include <libkern/OSCacheControl.h>
+
 class ICache : public AbstractICache {
  public:
   static void initialize();
+  static void __clear_cache_(void *start, void *end) {
+    sys_icache_invalidate(start, (char *)end-(char *)start);
+  }
   static void invalidate_word(address addr) {
-    __clear_cache((char *)addr, (char *)(addr + 3));
+    __clear_cache_((char *)addr, (char *)(addr + 3));
   }
   static void invalidate_range(address start, int nbytes) {
-    __clear_cache((char *)start, (char *)(start + nbytes));
+    __clear_cache_((char *)start, (char *)(start + nbytes));
   }
 };
 
